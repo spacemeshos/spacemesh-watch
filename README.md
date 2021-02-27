@@ -4,7 +4,7 @@ A CLI tool for monitoring various protocol features of spacemesh nodes and alert
 
 ## Prerequisites
 
-The CLI request Golang version `1.55` or above to be installed
+The CLI requires Golang version `1.55` or above to be installed
 
 ## Installing
 
