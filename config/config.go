@@ -1,6 +1,8 @@
 package config
 
 var (
-	Nodes         []string
-	LayerWaitTime int
+	Nodes            []string
+	LayerWaitTime    int
+	SlackAPIToken    string
+	SlackChannelName string
 )

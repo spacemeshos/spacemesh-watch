@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/spacemesh-watch/alert"
 	"github.com/spacemeshos/spacemesh-watch/config"
 	"google.golang.org/grpc"
 )
@@ -20,12 +21,14 @@ func scanNode(address string) {
 		"node": address,
 	}).Debug("fetching recent verified layer")
 
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
+		go alert.Raise("could not connect to API server for node: " + address + ". Error: " + err.Error())
 		log.WithFields(log.Fields{
 			"node":  address,
-			"error": err,
+			"error": err.Error(),
 		}).Error("could not connect to API service")
+		return
 	}
 
 	defer conn.Close()
@@ -38,10 +41,12 @@ func scanNode(address string) {
 	r, err := c.Status(ctx, &pb.StatusRequest{})
 
 	if err != nil {
+		go alert.Raise("could not fetch status for node: " + address + ". Error: " + err.Error())
 		log.WithFields(log.Fields{
 			"node":  address,
-			"error": err,
+			"error": err.Error(),
 		}).Error("could not fetch status")
+		return
 	}
 
 	layer, ok := layers[address]
@@ -54,6 +59,7 @@ func scanNode(address string) {
 		}).Debug("set initial verified layer")
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
+			go alert.Raise("verified layer is stuck for node: " + address + ". Current verified layer: " + string(layer))
 			log.WithFields(log.Fields{
 				"node":  address,
 				"layer": layer,
