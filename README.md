@@ -1,4 +1,4 @@
-# spacemesh-watch
+# Spacemesh Watch
 
 A CLI tool for monitoring various protocol features of spacemesh nodes and alerts if assertions are detected.
 
