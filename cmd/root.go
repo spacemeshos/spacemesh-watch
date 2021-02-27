@@ -15,10 +15,14 @@ var rootCmd = &cobra.Command{
 	Use:   "spacemesh-node-monitor",
 	Short: "A tool to monitor and raise alerts for spacemesh nodes",
 	Run: func(cmd *cobra.Command, args []string) {
-		monitor.StartMonitoring()
+		if len(config.Nodes) > 0 {
+			monitor.StartMonitoring()
 
-		ctx, _ := context.WithCancel(context.Background())
-		<-ctx.Done()
+			ctx, _ := context.WithCancel(context.Background())
+			<-ctx.Done()
+		} else {
+			log.Info("No nodes configured for monitoring. Exiting service...")
+		}
 	},
 }
 
