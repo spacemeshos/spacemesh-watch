@@ -15,6 +15,7 @@ import (
 
 var layers = make(map[string]uint32)
 var wg sync.WaitGroup
+var mu sync.Mutex
 
 func scanNode(address string) {
 	log.WithFields(log.Fields{
@@ -52,11 +53,13 @@ func scanNode(address string) {
 	layer, ok := layers[address]
 
 	if ok == false {
+		mu.Lock()
 		layers[address] = r.Status.VerifiedLayer.Number
 		log.WithFields(log.Fields{
 			"node":  address,
 			"layer": r.Status.VerifiedLayer.Number,
 		}).Debug("set initial verified layer")
+		mu.Unlock()
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
 			go alert.Raise("verified layer is stuck for node: " + address + ". Current verified layer: " + string(layer))
@@ -65,11 +68,13 @@ func scanNode(address string) {
 				"layer": layer,
 			}).Error("verified layer is stuck")
 		} else {
+			mu.Lock()
 			layers[address] = r.Status.VerifiedLayer.Number
 			log.WithFields(log.Fields{
 				"node":  address,
 				"layer": layer,
 			}).Debug("verified layer incremented")
+			mu.Unlock()
 		}
 	}
 
