@@ -11,7 +11,7 @@ The CLI requires Golang version `1.55` or above to be installed
 Run the following commands to install the CLI
 
 ```
-go install github.com/spacemeshos/spacemesh-watch
+go install github.com/spacemeshos/spacemesh-watch@latest
 yes | cp $(go env GOPATH)/bin/spacemesh-watch /usr/local/bin
 ```
 
