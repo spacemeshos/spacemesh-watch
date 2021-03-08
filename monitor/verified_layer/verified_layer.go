@@ -18,6 +18,8 @@ var wg sync.WaitGroup
 var mu sync.Mutex
 
 func scanNode(address string) {
+	defer wg.Done()
+
 	log.WithFields(log.Fields{
 		"node": address,
 	}).Debug("fetching recent verified layer")
@@ -77,8 +79,6 @@ func scanNode(address string) {
 			mu.Unlock()
 		}
 	}
-
-	defer wg.Done()
 }
 
 func scanNetwork() {
