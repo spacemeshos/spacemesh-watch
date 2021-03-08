@@ -2,6 +2,7 @@ package verified_layer
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"time"
 
@@ -26,7 +27,7 @@ func scanNode(address string) {
 
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		go alert.Raise("could not connect to API server for node: " + address + ". Error: " + err.Error())
+		go alert.Raise("could not connect to API server. Error: "+err.Error(), address, "CONNECTION_ERROR")
 		log.WithFields(log.Fields{
 			"node":  address,
 			"error": err.Error(),
@@ -38,13 +39,13 @@ func scanNode(address string) {
 
 	c := pb.NewNodeServiceClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	r, err := c.Status(ctx, &pb.StatusRequest{})
 
 	if err != nil {
-		go alert.Raise("could not fetch status. Error: "+err.Error(), address)
+		go alert.Raise("could not fetch status. Error: "+err.Error(), address, "CONNECTION_ERROR")
 		log.WithFields(log.Fields{
 			"node":  address,
 			"error": err.Error(),
@@ -64,7 +65,7 @@ func scanNode(address string) {
 		mu.Unlock()
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
-			go alert.Raise("verified layer is stuck. Current verified layer: "+string(layer), address)
+			go alert.Raise("verified layer is stuck. current verified layer: "+strconv.FormatUint(uint64(layer), 10), address, "VERIFIED_LAYER")
 			log.WithFields(log.Fields{
 				"node":  address,
 				"layer": layer,
