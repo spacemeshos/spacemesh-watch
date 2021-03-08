@@ -44,7 +44,7 @@ func scanNode(address string) {
 	r, err := c.Status(ctx, &pb.StatusRequest{})
 
 	if err != nil {
-		go alert.Raise("could not fetch status for node: " + address + ". Error: " + err.Error())
+		go alert.Raise("could not fetch status. Error: "+err.Error(), address)
 		log.WithFields(log.Fields{
 			"node":  address,
 			"error": err.Error(),
@@ -64,7 +64,7 @@ func scanNode(address string) {
 		mu.Unlock()
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
-			go alert.Raise("verified layer is stuck for node: " + address + ". Current verified layer: " + string(layer))
+			go alert.Raise("verified layer is stuck. Current verified layer: "+string(layer), address)
 			log.WithFields(log.Fields{
 				"node":  address,
 				"layer": layer,

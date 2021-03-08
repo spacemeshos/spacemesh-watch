@@ -6,9 +6,9 @@ import (
 	"github.com/spacemeshos/spacemesh-watch/config"
 )
 
-func Raise(message string) {
+func Raise(message string, miner string) {
 	api := slack.New(config.SlackAPIToken)
-	_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText("*Spacemesh Watch*: "+message, false))
+	_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText("*Spacemesh Watch (Miner: " + miner +)"*: " + message, false))
 
 	if err != nil {
 		log.WithFields(log.Fields{
