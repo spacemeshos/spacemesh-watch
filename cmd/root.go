@@ -29,6 +29,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	rootCmd.PersistentFlags().StringSliceVar(&config.Nodes, "nodes", []string{}, "comma seperated list of node GRPC URLs")
 	rootCmd.PersistentFlags().IntVarP(&config.LayerWaitTime, "layer-wait-time", "", 3600, "time in seconds to wait for verified layer to increment")
+	rootCmd.PersistentFlags().IntVarP(&config.SyncWaitTime, "sync-wait-time", "", 3600, "time in seconds to wait node status to change from syncing to synced after first")
 	rootCmd.PersistentFlags().StringVarP(&config.SlackAPIToken, "slack-api-token", "", "", "slack API token for authorizing assert notifications. create a slack app and generate user OAuth token and set set chat:write, chat:write.public and im:write permissions")
 	rootCmd.PersistentFlags().StringVarP(&config.SlackChannelName, "slack-channel-name", "", "", "slack channel name to send messages to. its the last path in the browser URL for the channel")
 

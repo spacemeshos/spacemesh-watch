@@ -1,4 +1,4 @@
-package verified_layer
+package sync_status
 
 import (
 	"context"
@@ -7,14 +7,18 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"github.com/spacemeshos/spacemesh-watch/alert"
 	"github.com/spacemeshos/spacemesh-watch/config"
 	"google.golang.org/grpc"
 )
 
-var layers = make(map[string]uint32)
+type SyncData struct {
+	isSynced    bool
+	syncedLayer uint32
+}
+
+var syncStatus = make(map[string]*SyncData)
 var wg sync.WaitGroup
 var mu sync.Mutex
 
@@ -23,7 +27,7 @@ func scanNode(address string) {
 
 	log.WithFields(log.Fields{
 		"node": address,
-	}).Debug("fetching recent verified layer")
+	}).Debug("fetching node status")
 
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
@@ -38,7 +42,6 @@ func scanNode(address string) {
 	defer conn.Close()
 
 	c := pb.NewNodeServiceClient(conn)
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -55,29 +58,41 @@ func scanNode(address string) {
 
 	mu.Lock()
 	defer mu.Unlock()
-	layer, ok := layers[address]
+
+	status, ok := syncStatus[address]
 
 	if ok == false {
-		layers[address] = r.Status.VerifiedLayer.Number
+		syncStatus[address] = &SyncData{r.Status.IsSynced, r.Status.SyncedLayer.Number}
 		log.WithFields(log.Fields{
-			"node":  address,
-			"layer": r.Status.VerifiedLayer.Number,
-		}).Info("set initial verified layer")
+			"node":   address,
+			"synced": r.Status.IsSynced,
+			"layer":  r.Status.SyncedLayer.Number,
+		}).Info("set initial sync status")
 	} else {
-		if r.Status.VerifiedLayer.Number <= layer {
-			go alert.Raise("verified layer is stuck. current verified layer: "+strconv.FormatUint(uint64(layer), 10), address, "")
-			log.WithFields(log.Fields{
-				"node":  address,
-				"layer": layer,
-			}).Error("verified layer is stuck")
+		if r.Status.IsSynced == false {
+			if status.syncedLayer < r.Status.SyncedLayer.Number {
+				log.WithFields(log.Fields{
+					"node":  address,
+					"layer": r.Status.SyncedLayer.Number,
+				}).Info("node still syncing")
+			} else {
+				go alert.Raise("node not syncing. current synced layer: "+strconv.FormatUint(uint64(status.syncedLayer), 10), address, "")
+				log.WithFields(log.Fields{
+					"node":  address,
+					"layer": r.Status.SyncedLayer.Number,
+				}).Error("node stuck at syncing")
+			}
 		} else {
-			layers[address] = r.Status.VerifiedLayer.Number
 			log.WithFields(log.Fields{
 				"node":  address,
-				"layer": layer,
-			}).Info("verified layer incremented")
+				"layer": r.Status.SyncedLayer.Number,
+			}).Info("node synced")
 		}
+
+		status.isSynced = r.Status.IsSynced
+		status.syncedLayer = r.Status.SyncedLayer.Number
 	}
+
 }
 
 func scanNetwork() {
@@ -89,10 +104,10 @@ func scanNetwork() {
 	wg.Wait()
 }
 
-func MonitorVerifiedLayerProgress() {
-	log.Debug("Started monitoring verified layer progress")
+func MonitorSyncStatus() {
+	log.Debug("Started monitoring sync status")
 	scanNetwork()
-	for range time.Tick(time.Duration(config.LayerWaitTime) * time.Second) {
+	for range time.Tick(time.Duration(config.SyncWaitTime) * time.Second) {
 		scanNetwork()
 	}
 }
