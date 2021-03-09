@@ -14,17 +14,19 @@ var mu sync.Mutex
 func Raise(message string, miner string, msg_type string) {
 	api := slack.New(config.SlackAPIToken)
 
-	mu.Lock()
-	defer mu.Unlock()
-	minerMap, ok := alertsTracker[miner]
+	if msg_type != "" {
+		mu.Lock()
+		defer mu.Unlock()
+		minerMap, ok := alertsTracker[miner]
 
-	if ok == false {
-		alertsTracker[miner] = make(map[string]bool)
-		alertsTracker[miner][msg_type] = true
-	} else if minerMap[msg_type] == false {
-		minerMap[msg_type] = true
-	} else if minerMap[msg_type] == true {
-		return
+		if ok == false {
+			alertsTracker[miner] = make(map[string]bool)
+			alertsTracker[miner][msg_type] = true
+		} else if minerMap[msg_type] == false {
+			minerMap[msg_type] = true
+		} else if minerMap[msg_type] == true {
+			return
+		}
 	}
 
 	_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText("*Spacemesh Watch (Miner: "+miner+")*: "+message, false))

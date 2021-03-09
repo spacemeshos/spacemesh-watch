@@ -65,7 +65,7 @@ func scanNode(address string) {
 		mu.Unlock()
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
-			go alert.Raise("verified layer is stuck. current verified layer: "+strconv.FormatUint(uint64(layer), 10), address, "VERIFIED_LAYER")
+			go alert.Raise("verified layer is stuck. current verified layer: "+strconv.FormatUint(uint64(layer), 10), address, "")
 			log.WithFields(log.Fields{
 				"node":  address,
 				"layer": layer,
