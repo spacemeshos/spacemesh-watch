@@ -53,16 +53,16 @@ func scanNode(address string) {
 		return
 	}
 
+	mu.Lock()
+	defer mu.Unlock()
 	layer, ok := layers[address]
 
 	if ok == false {
-		mu.Lock()
 		layers[address] = r.Status.VerifiedLayer.Number
 		log.WithFields(log.Fields{
 			"node":  address,
 			"layer": r.Status.VerifiedLayer.Number,
 		}).Debug("set initial verified layer")
-		mu.Unlock()
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
 			go alert.Raise("verified layer is stuck. current verified layer: "+strconv.FormatUint(uint64(layer), 10), address, "")
@@ -71,13 +71,11 @@ func scanNode(address string) {
 				"layer": layer,
 			}).Error("verified layer is stuck")
 		} else {
-			mu.Lock()
 			layers[address] = r.Status.VerifiedLayer.Number
 			log.WithFields(log.Fields{
 				"node":  address,
 				"layer": layer,
 			}).Debug("verified layer incremented")
-			mu.Unlock()
 		}
 	}
 }
