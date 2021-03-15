@@ -76,7 +76,7 @@ func scanNode(address string) {
 					"layer": r.Status.SyncedLayer.Number,
 				}).Info("node still syncing")
 			} else {
-				go alert.Raise("node not syncing. current synced layer: "+strconv.FormatUint(uint64(status.syncedLayer), 10), address, "")
+				go alert.Raise("node not syncing. current synced layer: "+strconv.FormatUint(uint64(status.syncedLayer), 10), address, "SYNC_STATUS")
 				log.WithFields(log.Fields{
 					"node":  address,
 					"layer": r.Status.SyncedLayer.Number,
