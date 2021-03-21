@@ -42,10 +42,14 @@ func Raise(message string, miner string, msg_type string) {
 	}
 }
 
+func resetAlerts() {
+	mu.Lock()
+	defer mu.Unlock()
+	alertsTracker = make(map[string]int)
+}
+
 func ResetTracker() {
 	for range time.Tick(time.Duration(config.SlackMessageLimitResetTime) * time.Second) {
-		mu.Lock()
-		defer mu.Unlock()
-		alertsTracker = make(map[string]int)
+		resetAlerts()
 	}
 }
