@@ -30,6 +30,7 @@ func scanNode(address string) {
 	}).Debug("fetching node status")
 
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	defer conn.Close()
 	if err != nil {
 		go alert.Raise("could not connect to API server. Error: "+err.Error(), address, "CONNECTION_ERROR")
 		log.WithFields(log.Fields{
@@ -38,8 +39,6 @@ func scanNode(address string) {
 		}).Error("could not connect to API service")
 		return
 	}
-
-	defer conn.Close()
 
 	c := pb.NewNodeServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

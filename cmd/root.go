@@ -19,7 +19,6 @@ var rootCmd = &cobra.Command{
 		if len(config.Nodes) > 0 {
 			go alert.ResetTracker()
 			go monitor.StartMonitoring()
-			
 
 			ctx, _ := context.WithCancel(context.Background())
 			<-ctx.Done()
@@ -33,6 +32,7 @@ func Execute() {
 	rootCmd.PersistentFlags().StringSliceVar(&config.Nodes, "nodes", []string{}, "comma seperated list of node GRPC URLs")
 	rootCmd.PersistentFlags().IntVarP(&config.LayerWaitTime, "layer-wait-time", "", 660, "time in seconds to wait for verified layer to increment")
 	rootCmd.PersistentFlags().IntVarP(&config.SyncWaitTime, "sync-wait-time", "", 3600, "time in seconds to wait node status to change from syncing to synced after first")
+	rootCmd.PersistentFlags().IntVarP(&config.RootHashWaitTime, "state-root-hash-wait-time", "", 600, "time in seconds to wait for checking if state root hash is same for all nodes for the same layer number")
 	rootCmd.PersistentFlags().StringVarP(&config.SlackAPIToken, "slack-api-token", "", "", "slack API token for authorizing assert notifications. create a slack app and generate \"Bot User OAuth Token\" and set set chat:write, chat:write.public and im:write permissions")
 	rootCmd.PersistentFlags().StringVarP(&config.SlackChannelName, "slack-channel-name", "", "", "slack channel name to send messages to. its the last path in the browser URL for the channel")
 	rootCmd.PersistentFlags().IntVarP(&config.SlackMessageLimit, "slack-message-limit", "", 4, "number of messages of a alert type after which its silenced")
