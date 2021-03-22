@@ -77,7 +77,7 @@ func compareHashes() {
 		for _, hash := range hashes {
 			if hash.layer == info.layer {
 				if hash.hash != info.hash {
-					go alert.Raise("state root hash doesn't match for verified layer: "+strconv.FormatUint(uint64(info.layer), 10)+" when compared with node "+hash.node, info.node, "STATE_ROOT_HASH")
+					go alert.Raise("state root hash ("+info.hash+") doesn't match for verified layer: "+strconv.FormatUint(uint64(info.layer), 10)+" when compared with node "+hash.node+"("+hash.hash+")", info.node, "STATE_ROOT_HASH")
 					log.WithFields(log.Fields{
 						"node1":  hash.node,
 						"node2": info.node,
