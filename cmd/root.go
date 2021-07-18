@@ -6,9 +6,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/spacemeshos/spacemesh-watch/alert"
 	"github.com/spacemeshos/spacemesh-watch/config"
 	"github.com/spacemeshos/spacemesh-watch/monitor"
-	"github.com/spacemeshos/spacemesh-watch/alert"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 	Short: "A tool to monitor and raise alerts for spacemesh nodes",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(config.Nodes) > 0 {
+			go config.Init()
 			go alert.ResetTracker()
 			go monitor.StartMonitoring()
 

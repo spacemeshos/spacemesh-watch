@@ -31,7 +31,7 @@ func Raise(message string, miner string, msg_type string) {
 	}
 
 	if sendMessage == true {
-		_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText("*Spacemesh Watch (Miner: "+miner+")*: "+message, false))
+		_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText("*Spacemesh Watch (Miner: "+config.NodeNames[miner]+")*: "+message, false))
 
 		if err != nil {
 			log.WithFields(log.Fields{

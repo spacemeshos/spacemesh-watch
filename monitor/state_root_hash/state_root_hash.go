@@ -1,11 +1,11 @@
 package state_root_hash
 
 import (
-	"encoding/hex"
 	"context"
+	"encoding/hex"
+	"strconv"
 	"sync"
 	"time"
-	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,9 +16,9 @@ import (
 )
 
 type stateRootInfo struct {
-  hash string
-  layer uint32
-	node string
+	hash  string
+	layer uint32
+	node  string
 }
 
 var hashes = []stateRootInfo{}
@@ -62,11 +62,11 @@ func scanNode(address string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	hashes = append(hashes, stateRootInfo{ hex.EncodeToString(r.Response.RootHash), r.Response.Layer.Number, address })
+	hashes = append(hashes, stateRootInfo{hex.EncodeToString(r.Response.RootHash), r.Response.Layer.Number, address})
 }
 
 func compareHashes() {
-	for ;; {
+	for {
 		if len(hashes) == 0 {
 			break
 		}
@@ -79,7 +79,7 @@ func compareHashes() {
 				if hash.hash != info.hash {
 					go alert.Raise("state root hash ("+info.hash+") doesn't match for verified layer: "+strconv.FormatUint(uint64(info.layer), 10)+" when compared with node "+hash.node+"("+hash.hash+")", info.node, "STATE_ROOT_HASH")
 					log.WithFields(log.Fields{
-						"node1":  hash.node,
+						"node1": hash.node,
 						"node2": info.node,
 						"hash1": hash.hash,
 						"hash2": info.hash,
@@ -87,9 +87,9 @@ func compareHashes() {
 					}).Error("state root hash doesn't match")
 				} else {
 					log.WithFields(log.Fields{
-						"node1":  hash.node,
+						"node1": hash.node,
 						"node2": info.node,
-						"hash": info.hash,
+						"hash":  info.hash,
 						"layer": hash.layer,
 					}).Info("state root hash matches")
 				}
