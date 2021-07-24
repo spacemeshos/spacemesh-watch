@@ -24,6 +24,7 @@ type stateRootInfo struct {
 var hashes = []stateRootInfo{}
 var wg sync.WaitGroup
 var mu sync.Mutex
+var totalForks = 0
 
 func scanNode(address string) {
 	defer wg.Done()
@@ -77,6 +78,7 @@ func compareHashes() {
 		for _, hash := range hashes {
 			if hash.layer == info.layer {
 				if hash.hash != info.hash {
+					totalForks++
 					go alert.Raise("state root hash ("+info.hash+") doesn't match for verified layer: "+strconv.FormatUint(uint64(info.layer), 10)+" when compared with node "+hash.node+"("+hash.hash+")", info.node, "STATE_ROOT_HASH")
 					log.WithFields(log.Fields{
 						"node1": hash.node,
@@ -108,7 +110,13 @@ func scanNetwork() {
 
 	wg.Wait()
 
+	totalForks = 0
 	compareHashes()
+
+	if totalForks != 0 {
+		go alert.Raise("total "+strconv.Itoa(totalForks)+" forks in the network", "", "FORKS_SUMMARY")
+		log.Error("total " + strconv.Itoa(totalForks) + " in the network")
+	}
 }
 
 func MonitorStateRootHash() {

@@ -17,6 +17,7 @@ import (
 var layers = make(map[string]uint32)
 var wg sync.WaitGroup
 var mu sync.Mutex
+var totalStuckNodes = 0
 
 func scanNode(address string) {
 	defer wg.Done()
@@ -62,6 +63,7 @@ func scanNode(address string) {
 			"node":  address,
 			"layer": r.Status.VerifiedLayer.Number,
 		}).Info("set initial verified layer")
+		totalStuckNodes++
 	} else {
 		if r.Status.VerifiedLayer.Number <= layer {
 			go alert.Raise("verified layer is stuck. current verified layer: "+strconv.FormatUint(uint64(layer), 10), address, "VERIFIED_LAYER")
@@ -80,12 +82,18 @@ func scanNode(address string) {
 }
 
 func scanNetwork() {
+	totalStuckNodes = 0
 	for _, node := range config.Nodes {
 		wg.Add(1)
 		go scanNode(node)
 	}
 
 	wg.Wait()
+
+	if totalStuckNodes != 0 {
+		go alert.Raise("total "+strconv.Itoa(totalStuckNodes)+" nodes are stuck verifying layer", "", "VERIFIED_LAYER_SUMMARY")
+		log.Error("total " + strconv.Itoa(totalStuckNodes) + " nodes are stuck verifying layer")
+	}
 }
 
 func MonitorVerifiedLayerProgress() {

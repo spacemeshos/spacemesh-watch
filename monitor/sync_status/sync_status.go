@@ -21,6 +21,8 @@ type SyncData struct {
 var syncStatus = make(map[string]*SyncData)
 var wg sync.WaitGroup
 var mu sync.Mutex
+var totalStuckNodes = 0
+var totalCrashedNodes = 0
 
 func scanNode(address string) {
 	defer wg.Done()
@@ -29,16 +31,8 @@ func scanNode(address string) {
 		"node": address,
 	}).Debug("fetching node status")
 
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	conn, _ := grpc.Dial(address, grpc.WithInsecure())
 	defer conn.Close()
-	if err != nil {
-		go alert.Raise("could not connect to API server. Error: "+err.Error(), address, "CONNECTION_ERROR")
-		log.WithFields(log.Fields{
-			"node":  address,
-			"error": err.Error(),
-		}).Error("could not connect to API service")
-		return
-	}
 
 	c := pb.NewNodeServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -46,17 +40,17 @@ func scanNode(address string) {
 
 	r, err := c.Status(ctx, &pb.StatusRequest{})
 
+	mu.Lock()
+	defer mu.Unlock()
+
 	if err != nil {
 		go alert.Raise("could not fetch status. Error: "+err.Error(), address, "CONNECTION_ERROR")
 		log.WithFields(log.Fields{
 			"node":  address,
 			"error": err.Error(),
 		}).Error("could not fetch status")
-		return
+		totalCrashedNodes++
 	}
-
-	mu.Lock()
-	defer mu.Unlock()
 
 	status, ok := syncStatus[address]
 
@@ -75,6 +69,7 @@ func scanNode(address string) {
 					"layer": r.Status.SyncedLayer.Number,
 				}).Info("node still syncing")
 			} else {
+				totalStuckNodes++
 				go alert.Raise("node not syncing. current synced layer: "+strconv.FormatUint(uint64(status.syncedLayer), 10), address, "SYNC_STATUS")
 				log.WithFields(log.Fields{
 					"node":  address,
@@ -95,12 +90,24 @@ func scanNode(address string) {
 }
 
 func scanNetwork() {
+	totalStuckNodes = 0
+	totalCrashedNodes = 0
 	for _, node := range config.Nodes {
 		wg.Add(1)
 		go scanNode(node)
 	}
 
 	wg.Wait()
+
+	if totalStuckNodes != 0 {
+		go alert.Raise("total "+strconv.Itoa(totalStuckNodes)+" nodes are stuck syncing", "", "VERIFIED_LAYER_SUMMARY")
+		log.Error("total " + strconv.Itoa(totalStuckNodes) + " nodes are stuck syncing")
+	}
+
+	if totalCrashedNodes != 0 {
+		go alert.Raise("total "+strconv.Itoa(totalCrashedNodes)+" nodes have crashed", "", "CRASHED_NODES_SUMMARY")
+		log.Error("total " + strconv.Itoa(totalCrashedNodes) + " nodes have crashed")
+	}
 }
 
 func MonitorSyncStatus() {
