@@ -101,7 +101,7 @@ func scanNetwork() {
 	wg.Wait()
 
 	if totalStuckNodes != 0 {
-		go alert.Raise("total "+strconv.Itoa(totalStuckNodes)+" nodes are stuck syncing", "", "VERIFIED_LAYER_SUMMARY")
+		go alert.Raise("total "+strconv.Itoa(totalStuckNodes)+" nodes are stuck syncing", "", "STUCK_LAYER_SUMMARY")
 		log.Error("total " + strconv.Itoa(totalStuckNodes) + " nodes are stuck syncing")
 	}
 
