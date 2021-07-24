@@ -50,6 +50,7 @@ func scanNode(address string) {
 			"error": err.Error(),
 		}).Error("could not fetch status")
 		totalCrashedNodes++
+		return
 	}
 
 	status, ok := syncStatus[address]
