@@ -38,6 +38,7 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&config.SlackChannelName, "slack-channel-name", "", "", "slack channel name to send messages to. its the last path in the browser URL for the channel")
 	rootCmd.PersistentFlags().IntVarP(&config.SlackMessageLimit, "slack-message-limit", "", 4, "number of messages of a alert type after which its silenced")
 	rootCmd.PersistentFlags().IntVarP(&config.SlackMessageLimitResetTime, "slack-message-limit-reset", "", 3600, "number of seconds after which slack message limit is reset")
+	rootCmd.PersistentFlags().StringVarP(&config.NetworkName, "network-name", "", "", "name of the network")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err.Error())

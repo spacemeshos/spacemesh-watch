@@ -35,10 +35,10 @@ func Raise(message string, miner string, msg_type string) {
 		nodeName := ""
 
 		if config.NodeNames[miner] != "" {
-			nodeName = "*Miner: " + config.NodeNames[miner] + "*: "
+			nodeName = "*" + config.NodeNames[miner] + "*: "
 		}
 
-		_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText(nodeName+message, false))
+		_, _, err := api.PostMessage(config.SlackChannelName, slack.MsgOptionText("Network: "+config.NetworkName+": "+nodeName+message, false))
 
 		if err != nil {
 			log.WithFields(log.Fields{

@@ -14,6 +14,7 @@ var (
 	SlackMessageLimit          int
 	SlackMessageLimitResetTime int
 	NodeNames                  map[string]string
+	NetworkName                string
 )
 
 func Init() {
