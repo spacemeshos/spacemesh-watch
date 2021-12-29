@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -77,6 +78,9 @@ func scanNetwork() {
 		if len(layer) > 1 {
 			go alert.Raise("total "+strconv.Itoa(len(layer))+" forks in the network for layer "+key, "", "FORKS_SUMMARY")
 			log.Error("total " + strconv.Itoa(len(layer)) + " forks in the network for layer " + key)
+
+			go alert.Raise("hashes for layer "+key+" are "+strings.Join(layer, ","), "", "STATE_ROOT_HASH")
+			log.Error("hashes for layer " + key + " are " + strings.Join(layer, ","))
 		}
 	}
 
