@@ -79,8 +79,8 @@ func scanNetwork() {
 			go alert.Raise("total "+strconv.Itoa(len(layer))+" forks in the network for layer "+key, "", "FORKS_SUMMARY")
 			log.Error("total " + strconv.Itoa(len(layer)) + " forks in the network for layer " + key)
 
-			go alert.Raise("hashes for layer "+key+" are "+strings.Join(layer, ","), "", "STATE_ROOT_HASH")
-			log.Error("hashes for layer " + key + " are " + strings.Join(layer, ","))
+			go alert.Raise("state root hashes for layer "+key+" are "+strings.Join(layer, ", "), "", "STATE_ROOT_HASH")
+			log.Error("state root hashes for layer " + key + " are " + strings.Join(layer, ", "))
 		}
 	}
 
