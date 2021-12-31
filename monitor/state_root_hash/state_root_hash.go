@@ -3,7 +3,9 @@ package state_root_hash
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,16 +17,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-type stateRootInfo struct {
-	hash  string
-	layer uint32
-	node  string
-}
-
-var hashes = []stateRootInfo{}
+var hashes = map[string][]string{}
 var wg sync.WaitGroup
 var mu sync.Mutex
-var totalForks = 0
 
 func scanNode(address string) {
 	defer wg.Done()
@@ -63,43 +58,12 @@ func scanNode(address string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	hashes = append(hashes, stateRootInfo{hex.EncodeToString(r.Response.RootHash), r.Response.Layer.Number, address})
-}
+	hash := hex.EncodeToString(r.Response.RootHash)
+	layer := fmt.Sprint(r.Response.Layer.Number)
 
-func compareHashes() {
-	for {
-		if len(hashes) == 0 {
-			break
-		}
-
-		info := &hashes[0]
-		hashes = hashes[1:]
-
-		for _, hash := range hashes {
-			if hash.layer == info.layer {
-				if hash.hash != info.hash {
-					totalForks++
-					go alert.Raise("state root hash ("+info.hash+") doesn't match for verified layer: "+strconv.FormatUint(uint64(info.layer), 10)+" when compared with node "+hash.node+"("+hash.hash+")", info.node, "STATE_ROOT_HASH")
-					log.WithFields(log.Fields{
-						"node1": hash.node,
-						"node2": info.node,
-						"hash1": hash.hash,
-						"hash2": info.hash,
-						"layer": hash.layer,
-					}).Error("state root hash doesn't match")
-				} else {
-					log.WithFields(log.Fields{
-						"node1": hash.node,
-						"node2": info.node,
-						"hash":  info.hash,
-						"layer": hash.layer,
-					}).Info("state root hash matches")
-				}
-			}
-		}
+	if !contains(hashes[layer], hash) {
+		hashes[layer] = append(hashes[layer], hash)
 	}
-
-	hashes = []stateRootInfo{}
 }
 
 func scanNetwork() {
@@ -110,13 +74,17 @@ func scanNetwork() {
 
 	wg.Wait()
 
-	totalForks = 0
-	compareHashes()
+	for key, layer := range hashes {
+		if len(layer) > 1 {
+			go alert.Raise("total "+strconv.Itoa(len(layer))+" forks in the network for layer "+key, "", "FORKS_SUMMARY")
+			log.Error("total " + strconv.Itoa(len(layer)) + " forks in the network for layer " + key)
 
-	if totalForks != 0 {
-		go alert.Raise("total "+strconv.Itoa(totalForks)+" forks in the network", "", "FORKS_SUMMARY")
-		log.Error("total " + strconv.Itoa(totalForks) + " in the network")
+			go alert.Raise("hashes for layer "+key+" are "+strings.Join(layer, ","), "", "STATE_ROOT_HASH")
+			log.Error("hashes for layer " + key + " are " + strings.Join(layer, ","))
+		}
 	}
+
+	hashes = map[string][]string{}
 }
 
 func MonitorStateRootHash() {
@@ -125,4 +93,13 @@ func MonitorStateRootHash() {
 	for range time.Tick(time.Duration(config.RootHashWaitTime) * time.Second) {
 		scanNetwork()
 	}
+}
+
+func contains(elems []string, v string) bool {
+	for _, s := range elems {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
